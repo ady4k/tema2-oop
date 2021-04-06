@@ -14,6 +14,7 @@ public:
     // constructori & destructor
     Locuinta();
     Locuinta(const string &numeClient_, int suprafataUtila_, float discount_);
+    Locuinta(const Locuinta &other);
     ~Locuinta();
 
     // getteri
@@ -29,6 +30,8 @@ public:
     // metode
     virtual void setValues(const string &numeClient_, int suprafataUtila_, float discount_);
     virtual float CalculChirie(int chirieSuprafata, bool areDiscount);
+    virtual void citeste(istream &in) = 0;
+    virtual void afiseaza(ostream &out) = 0;
 };
 
 // constructori & destructor
@@ -44,6 +47,12 @@ Locuinta::Locuinta(const string &numeClient_, int suprafataUtila_, float discoun
     numeClient = numeClient_;
     suprafataUtila = suprafataUtila_;
     discount = discount_;
+}
+
+Locuinta::Locuinta(const Locuinta &other) {
+    this->setNumeClient(other.getNumeClient());
+    this->setSuprafataUtila(other.getSuprafataUtila());
+    this->setDiscount(other.getDiscount());
 }
 
 Locuinta::~Locuinta() = default;
@@ -105,17 +114,22 @@ public:
 
     // metode
     float CalculChirie(int chirieSuprafata, bool areDiscount) override;
+    void afiseaza(ostream &out) override;
+    void citeste(istream &in) override;
 };
 
 // constructori & destructor
 Apartament::Apartament() {
+    numeClient = "";
+    suprafataUtila = NULL;
+    discount = 0.0;
     etaj = NULL;
 }
 
 Apartament::Apartament(const string &numeClient_, int suprafataUtila_, float discount_, int etaj_) : Locuinta(numeClient_,
                                                                                                               suprafataUtila_,
                                                                                                               discount_),
-                                                                                                      etaj(etaj_) {
+                                                                                                     etaj(etaj_) {
     numeClient = numeClient_;
     suprafataUtila = suprafataUtila_;
     discount = discount_;
@@ -146,6 +160,14 @@ float Apartament::CalculChirie(int chirieSuprafata, bool areDiscount) {
     return chirieSuprafata * suprafataUtila * (1 - areDiscount * discount / 100.0);
 }
 
+void Apartament::afiseaza(ostream &out) {
+
+}
+
+void Apartament::citeste(istream &in) {
+
+}
+
 
 // ******************************************************************************* //
 class Casa : public Locuinta{
@@ -166,17 +188,22 @@ public:
 
     // metode
     float CalculChirie(int chirieSuprafata, bool areDiscount) override;
+    void afiseaza(ostream &out) override;
+    void citeste(istream &in) override;
 };
 
 // constructori & destructor
 Casa::Casa() {
+    numeClient = "";
+    suprafataUtila = NULL;
+    discount = 0.0;
     suprafataCurte = NULL;
 }
 
 Casa::Casa(const string &numeClient_, int suprafataUtila_, float discount_, int suprafataCurte_) : Locuinta(numeClient_,
                                                                                                             suprafataUtila_,
                                                                                                             discount_),
-                                                                                                    suprafataCurte(
+                                                                                                   suprafataCurte(
                                                                                                             suprafataCurte_) {
     numeClient = numeClient_;
     suprafataUtila = suprafataUtila_;
@@ -208,16 +235,25 @@ float Casa::CalculChirie(int chirieSuprafata, bool areDiscount) {
     return chirieSuprafata * (suprafataUtila + 0.2 * suprafataCurte) * (1 - areDiscount * discount / 100.0);
 }
 
+void Casa::afiseaza(ostream &out) {
+
+}
+
+void Casa::citeste(istream &in) {
+
+}
+
+
 // ******************************************************************************* //
-class AgentieImobiliara {
+class AgentieImobiliara : public Casa, Apartament {
 private:
     static int dimensiune;
     static int nrLocuinte;
-    Locuinta *locuinta;
+    Locuinta **locuinta;
 public:
     // constructori & destructor
     AgentieImobiliara();
-    AgentieImobiliara(int dimensiune_);
+    explicit AgentieImobiliara(int dimensiune_);
     AgentieImobiliara(const AgentieImobiliara &other);
     ~AgentieImobiliara();
 
@@ -236,29 +272,32 @@ public:
     void extindere();
     void micsorare();
     void stergereLocuinta(int nrLocuinta);
-    void adaugaLocuinta(const string &numeClient_, int suprafataUtila_, float discount_);
+    void adaugaLocuinta(bool tip, const string &numeClient_, int suprafataUtila_, float discount_, int valoare);
 
+    // supraincarcare
+    friend istream& operator>>(istream &in, Locuinta& locuinta);
+    friend ostream& operator<<(ostream &out, Locuinta& locuinta);
 };
 
 // constructori
 AgentieImobiliara::AgentieImobiliara() {
     dimensiune = NULL;
     nrLocuinte = NULL;
-    locuinta = new Locuinta[0];
+    locuinta = new Locuinta*[0];
 }
 
 AgentieImobiliara::AgentieImobiliara(int dimensiune_) {
     dimensiune = dimensiune_;
     nrLocuinte = 0;
-    locuinta = new Locuinta[dimensiune_];
+    locuinta = new Locuinta*[dimensiune_];
 }
 
-AgentieImobiliara::AgentieImobiliara(const AgentieImobiliara &other) {
+AgentieImobiliara::AgentieImobiliara(const AgentieImobiliara &other) : Casa(other), Apartament(other) {
     nrLocuinte = other.nrLocuinte;
     if (dimensiune < 1) {
         locuinta = NULL;
     } else {
-        locuinta = new Locuinta[dimensiune];
+        locuinta = new Locuinta*[dimensiune];
         for (int i = 0; i < dimensiune; i++) {
             locuinta[i] = other.locuinta[i];
         }
@@ -271,7 +310,7 @@ AgentieImobiliara::~AgentieImobiliara() {
 
 // getteri
 Locuinta *AgentieImobiliara::getLocuinta() const {
-    return locuinta;
+    return *locuinta;
 }
 
 int AgentieImobiliara::getDimensiune() {
@@ -284,7 +323,7 @@ int AgentieImobiliara::getNrLocuinte() {
 
 // setteri
 void AgentieImobiliara::setLocuinta(Locuinta *locuinta_) {
-    this->locuinta = locuinta_;
+    this->locuinta = &locuinta_;
 }
 
 void AgentieImobiliara::setDimensiune(int dimensiune_) {
@@ -298,14 +337,14 @@ void AgentieImobiliara::setNrLocuinte(int nrLocuinte_) {
 // metode
 void AgentieImobiliara::initializare(int nrLocuinte_) {
     for(int i = nrLocuinte_; i < dimensiune; i++) {
-        locuinta[i].setValues("", NULL, 0.0);
+        locuinta[i]->setValues("", NULL, 0.0);
     }
 }
 
 void AgentieImobiliara::extindere() {
     dimensiune++;
     if (dimensiune > 1) {
-        Locuinta *temp = new Locuinta[dimensiune];
+        Locuinta **temp = new Locuinta*[dimensiune];
         for(int i = 0; i < nrLocuinte; i++) {
             temp[i] = locuinta[i];
         }
@@ -313,14 +352,14 @@ void AgentieImobiliara::extindere() {
         locuinta = temp;
         initializare(nrLocuinte);
     } else {
-        locuinta = new Locuinta[dimensiune];
+        locuinta = new Locuinta*[dimensiune];
         initializare(nrLocuinte);
     }
 }
 
 void AgentieImobiliara::micsorare() {
     dimensiune--;
-    Locuinta *temp = new Locuinta[dimensiune];
+    Locuinta **temp = new Locuinta*[dimensiune];
     for(int i = 0; i < dimensiune; i++) {
         temp[i] = locuinta[i];
     }
@@ -336,20 +375,35 @@ void AgentieImobiliara::stergereLocuinta(int nrLocuinta) {
     micsorare();
 }
 
-void AgentieImobiliara::adaugaLocuinta(const string &numeClient_, int suprafataUtila_, float discount_) {
+void AgentieImobiliara::adaugaLocuinta(bool tip, const string &numeClient_, int suprafataUtila_, float discount_, int valoare) {
     if (nrLocuinte == dimensiune) {
         extindere();
-        locuinta[nrLocuinte++].setValues(numeClient_, suprafataUtila_, discount_);
+    }
+    if (tip == 0) {
+        Casa *obiect;
+        obiect->setValues(numeClient_, suprafataUtila_, discount_, valoare);
+        locuinta[nrLocuinte++] = obiect;
+
     } else {
-        locuinta[nrLocuinte++].setValues(numeClient_, suprafataUtila_, discount_);
+        Apartament *obiect;
+        obiect->setValues(numeClient_, suprafataUtila_, discount_, valoare);
+        locuinta[nrLocuinte++] = obiect;
     }
 }
 
 // supraincarcare
+istream &operator>>(istream &in, Locuinta &locuinta) {
+
+    return in;
+}
+
+ostream &operator<<(ostream &out, Locuinta &locuinta) {
+
+    return out;
+}
 
 
 // ******************************************************************************* //
-
 // baza
 bool iesire();
 
