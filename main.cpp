@@ -248,7 +248,7 @@ Casa::Casa(const string &numeClient_, int suprafataUtila_, float discount_, int 
                                                                                                             suprafataUtila_,
                                                                                                             discount_),
                                                                                                    suprafataCurte(
-                                                                                                            suprafataCurte_) {
+                                                                                                           suprafataCurte_) {
     numeClient = numeClient_;
     suprafataUtila = suprafataUtila_;
     discount = discount_;
@@ -347,6 +347,7 @@ public:
     void adaugaLocuinta(bool tip, const string &numeClient_, int suprafataUtila_, float discount_, int valoare);
     void afisare();
     void stergere();
+    static void adaugare();
 
     static void afisareInstante();
 
@@ -395,7 +396,7 @@ AgentieImobiliara::AgentieImobiliara(const AgentieImobiliara &other) : Casa(othe
 
 AgentieImobiliara::~AgentieImobiliara() {
     numarObiecte--;
-    obiecte[id] = NULL;
+    obiecte.erase(obiecte.begin() + id);
     delete [] locuinta;
 }
 
@@ -500,11 +501,14 @@ void AgentieImobiliara::stergere() {
 }
 
 void AgentieImobiliara::afisareInstante() {
-    for (auto i : obiecte) {
-        cout << i;
+    for (AgentieImobiliara* i : obiecte) {
+        cout << i << ' ';
     }
 }
 
+void AgentieImobiliara::adaugare() {
+    new AgentieImobiliara;
+}
 
 
 // ******************************************************************************* //
@@ -513,61 +517,188 @@ bool iesire();
 
 int main() {
     bool exit = false; // marcheaza iesirea din program
-    int i;
+    int caz;
     // meniu interactiv
-    /*
-    AgentieImobiliara obiecte, obiecte3;
-    obiecte.afisareInstante();
-    cout << obiecte.getObiect(0);
-    cout << obiecte.getObiect(0)->getDimensiune();
-    obiecte3.stergere();
-    obiecte.afisareInstante();
-    */
+
+    AgentieImobiliara obiect;
 
     do {
         cout << "1. Adauga o noua agentie imobiliara\n"
                 "2. Sterge o agentie imobiliara\n"
-                "3. Afiseaza o agentie imobiliara\n"
+                "3. Afiseaza agentiile imobiliare\n"
                 "4. Adauga o locuinta noua intr-o agentie imobiliara\n"
                 "5. Sterge o locuinta dintr-o agentie imobiliara\n"
-                "6. Afiseaza o locuinta dintr-o agentie imobiliara\n"
+                "6. Afiseaza locuintele dintr-o agentie imobiliara\n"
                 "7. Calculeaza chiria pentru o locuinta\n"
                 "8. Iesire\n";
-        cin >> i;
-        switch (i) {
+        cin >> caz;
+        switch (caz) {
             case 1: {
                 system("CLS");
-
+                cout << "Aveti " << obiect.nrObiecte() << " agentii in prezent.\nDoriti sa adaugati inca una? (Y/n)";
+                char acord;
+                cin >> acord;
+                if (acord == 'Y' || acord == 'y') {
+                    obiect.adaugare();
+                    cout << "Ati adaugat o noua agentie.\n";
+                } else if (acord == 'N' || acord == 'n') {
+                    cout << "Nu s-a modificat nimic.\n";
+                } else {
+                    cout << "Valoare introdusa invalida!\nScrieri doar Y pentru da sau N pentru nu.";
+                }
                 system("pause");
-                exit = iesire();
+                //exit = iesire();
                 break;
             }
             case 2: {
                 system("CLS");
-                //
+                if (obiect.nrObiecte() == 1) {
+                    cout << "Nu poti sterge ultima agentie ramasa!\n";
+                } else {
+                    system("CLS");
+                    cout << "Introduceti numarul agentiei pe care vreti sa o stergeti.\n";
+                    for (int i = 0; i < obiect.nrObiecte(); i++) {
+                        cout << "Agentia nr. " << i + 1 << '\n';
+                        obiect.getObiect(i)->afisare();
+                        cout << '\n';
+                    }
+                    int numar;
+                    cin >> numar;
+                    obiect.getObiect(numar - 1)->stergere();
+                }
                 system("pause");
-                exit = iesire();
+                //exit = iesire();
                 break;
             }
             case 3: {
                 system("CLS");
-                //
+                cout << "Agentii imobiliare:\n\n";
+                for (int i = 0; i < obiect.nrObiecte(); i++) {
+                    cout << "Agentia nr. " << i + 1 << '\n';
+                    obiect.getObiect(i)->afisare();
+                    cout << '\n';
+                }
                 system("pause");
-                exit = iesire();
+                //exit = iesire();
                 break;
             }
             case 4: {
                 system("CLS");
-                //
+                cout << "Alegeti agentia imobiliara: \n\n";
+                for (int i = 0; i < obiect.nrObiecte(); i++) {
+                    cout << "Agentia nr. " << i + 1 << '\n';
+                    obiect.getObiect(i)->afisare();
+                    cout << '\n';
+                }
+                int agentie;
+                cin >> agentie;
+                system("CLS");
+                cout << "Alegeti tipul de locuinta:\n"
+                        "1)Casa\n"
+                        "2)Apartament\n";
+                int numar;
+                cin >> numar;
+                cout << "Introduceti numele clientului: ";
+                string numeClient_;
+                cin >> numeClient_;
+                cout << "Introduceti suprafata utila a locuintei: ";
+                int suprafataUtila_;
+                cin >> suprafataUtila_;
+                cout << "Introduceti discount-ul: ";
+                float discount_;
+                cin >> discount_;
+                if (numar == 1) {
+                    cout << "Introduceti suprafata curtii: ";
+                    int suprafataCurte_;
+                    cin >> suprafataCurte_;
+                    obiect.getObiect(agentie)->adaugaLocuinta(numar - 1, numeClient_, suprafataUtila_, discount_, suprafataCurte_);
+                    cout << "Locuinta a fost adaugata!\n";
+                } else {
+                    cout << "Introduceti etajul apartamentului: ";
+                    int etaj_;
+                    cin >> etaj_;
+                    obiect.getObiect(agentie)->adaugaLocuinta(numar - 1, numeClient_, suprafataUtila_, discount_, etaj_);
+                    cout << "Locuinta a fost adaugata!\n";
+                }
                 system("pause");
-                exit = iesire();
+                //exit = iesire();
                 break;
             }
             case 5: {
                 system("CLS");
+                cout << "Alegeti agentia imobiliara: \n\n";
+                for (int i = 0; i < obiect.nrObiecte(); i++) {
+                    cout << "Agentia nr. " << i + 1 << '\n';
+                    obiect.getObiect(i)->afisare();
+                    cout << '\n';
+                }
+                int agentie;
+                cin >> agentie;
+                system("CLS");
+                cout << "Alege o locuinta:";
+                obiect.getObiect(agentie)->afisare();
+                int locuinta;
+                cin >> locuinta;
+                obiect.getObiect(agentie)->stergereLocuinta(locuinta - 1);
+                cout << "Locuinta a fost stearsa!";
+                system("pause");
+                //exit = iesire();
+                break;
+            }
+            case 6: {
+                system("CLS");
+                cout << "Alegeti agentia imobiliara: \n\n";
+                for (int i = 0; i < obiect.nrObiecte(); i++) {
+                    cout << "Agentia nr. " << i + 1 << '\n';
+                    obiect.getObiect(i)->afisare();
+                    cout << '\n';
+                }
+                int agentie;
+                cin >> agentie;
+                system("CLS");
+                obiect.getObiect(agentie)->afisare();
+                system("pause");
+                //exit = iesire();
+                break;
+            }
+            case 7: {
+                system("CLS");
+                cout << "Alegeti agentia imobiliara: \n\n";
+                for (int i = 0; i < obiect.nrObiecte(); i++) {
+                    cout << "Agentia nr. " << i + 1 << '\n';
+                    obiect.getObiect(i)->afisare();
+                    cout << '\n';
+                }
+                int agentie;
+                cin >> agentie;
+                system("CLS");
+                cout << "Alege o locuinta:";
+                obiect.getObiect(agentie)->afisare();
+                int locuinta;
+                cin >> locuinta;
+                system("CLS");
+                cout << "Aplicati discount-ul pentru chiria acestei locuinta?\nIntroduceti (da) sau (nu).\n";
+                string introdus;
+                bool areDiscount_;
+                cin >> introdus;
+                if (introdus == "da" || introdus == "Da" || introdus == "dA" || introdus == "DA") {
+                    areDiscount_ = true;
+                } else if (introdus == "nu" || introdus == "nU" || introdus == "Nu" || introdus == "NU") {
+                    areDiscount_ = false;
+                } else {
+                    cout << "Valoare introdusa incorecta! Discountul nu a fost aplicat.";
+                    areDiscount_ = false;
+                }
+                //obiect.getObiect(agentie)->getLocuinta();
+                system("pause");
+                //exit = iesire();
+                break;
+            }
+            case 8: {
+                system("CLS");
                 //
                 system("pause");
-                exit = iesire();
+                exit = true;
                 break;
             }
             default: {
