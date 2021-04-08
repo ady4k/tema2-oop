@@ -3,6 +3,11 @@
 #include <vector>
 using namespace std;
 
+/// CLion 2021.1
+/// C++11
+/// Repo GitHub:
+/// https://github.com/ady4k/tema2-oop
+
 // Definire clase
 // ******************************************************************************* //
 class Locuinta {
@@ -32,6 +37,7 @@ public:
     virtual float CalculChirie(int chirieSuprafata, bool areDiscount) = 0;
     virtual void citeste(istream &in) = 0;
     virtual void afiseaza(ostream &out) = 0;
+    virtual bool tip() = 0;
 
     // supraincarcare
     friend istream& operator>>(istream &in, Locuinta& locuinta);
@@ -132,6 +138,7 @@ public:
     float CalculChirie(int chirieSuprafata, bool areDiscount) override;
     void afiseaza(ostream &out) override;
     void citeste(istream &in) override;
+    bool tip() override;
 
     friend istream& operator>>(istream &in, Apartament& apartament);
     friend ostream& operator<<(ostream &out, Apartament& apartament);
@@ -177,7 +184,7 @@ void Apartament::setValues(const string &numeClient_, int suprafataUtila_, float
 
 // metode
 float Apartament::CalculChirie(int chirieSuprafata, bool areDiscount) {
-    return chirieSuprafata * this->getSuprafataUtila() * (1 - areDiscount * this->getDiscount() / 100.0);
+    return chirieSuprafata * suprafataUtila * (1 - areDiscount * discount / 100.0);
 }
 
 void Apartament::afiseaza(ostream &out) {
@@ -187,6 +194,10 @@ void Apartament::afiseaza(ostream &out) {
 void Apartament::citeste(istream &in) {
     cout << "Etaj:";
     in >> this->etaj;
+}
+
+bool Apartament::tip() {
+    return false;
 }
 
 // supraincarcare
@@ -207,6 +218,7 @@ Apartament &Apartament::operator=(const Apartament &other) {
     this->setEtaj(other.getEtaj());
     return *this;
 }
+
 
 
 // ******************************************************************************* //
@@ -230,6 +242,7 @@ public:
     float CalculChirie(int chirieSuprafata, bool areDiscount) override;
     void afiseaza(ostream &out) override;
     void citeste(istream &in) override;
+    bool tip() override;
 
     friend istream& operator>>(istream &in, Casa& casa);
     friend ostream& operator<<(ostream &out, Casa& casa);
@@ -276,7 +289,10 @@ void Casa::setValues(const string &numeClient_, int suprafataUtila_, float disco
 
 // metode
 float Casa::CalculChirie(int chirieSuprafata, bool areDiscount) {
-    return chirieSuprafata * (this->getSuprafataUtila() + 0.2 * this->getSuprafataCurte()) * (1 - areDiscount * this->getDiscount() / 100.0);
+    float chirie = suprafataUtila + 0.2 * suprafataCurte;
+    float discount = 1 - (areDiscount * discount) / 100.0;
+
+    return chirieSuprafata * chirie * discount;
 }
 
 void Casa::afiseaza(ostream &out) {
@@ -286,6 +302,10 @@ void Casa::afiseaza(ostream &out) {
 void Casa::citeste(istream &in) {
     cout << "Suprafata curte:";
     in >> this->suprafataCurte;
+}
+
+bool Casa::tip() {
+    return true;
 }
 
 // supraincarcare
@@ -328,10 +348,11 @@ public:
 
     // getteri
     Locuinta *getLocuinta() const;
-    int getDimensiune();
-    int getNrLocuinte();
+    int getDimensiune() const;
+    int getNrLocuinte() const;
     static int nrObiecte();
     static AgentieImobiliara* getObiect(int i);
+    Locuinta *getLocuinta(int nr);
 
     // setteri
     void setLocuinta(Locuinta *locuinta_);
@@ -346,6 +367,7 @@ public:
     void stergereLocuinta(int nrLocuinta);
     void adaugaLocuinta(bool tip, const string &numeClient_, int suprafataUtila_, float discount_, int valoare);
     void afisare();
+    void afisareDetaliat();
     void stergere();
     static void adaugare();
 
@@ -358,8 +380,8 @@ vector<AgentieImobiliara*> AgentieImobiliara::obiecte = vector<AgentieImobiliara
 
 // constructori
 AgentieImobiliara::AgentieImobiliara() {
-    dimensiune = NULL;
-    nrLocuinte = NULL;
+    dimensiune = 0;
+    nrLocuinte = 0;
     locuinta = new Locuinta*[0];
 
     numarObiecte++;
@@ -405,11 +427,11 @@ Locuinta *AgentieImobiliara::getLocuinta() const {
     return *locuinta;
 }
 
-int AgentieImobiliara::getDimensiune() {
+int AgentieImobiliara::getDimensiune() const {
     return dimensiune;
 }
 
-int AgentieImobiliara::getNrLocuinte() {
+int AgentieImobiliara::getNrLocuinte() const {
     return nrLocuinte;
 }
 
@@ -419,6 +441,10 @@ int AgentieImobiliara::nrObiecte() {
 
 AgentieImobiliara* AgentieImobiliara::getObiect(int i) {
     return obiecte.at(i);
+}
+
+Locuinta *AgentieImobiliara::getLocuinta(int nr) {
+    return locuinta[nr];
 }
 
 // setteri
@@ -435,25 +461,28 @@ void AgentieImobiliara::setNrLocuinte(int nrLocuinte_) {
 }
 
 // metode
+/*
 void AgentieImobiliara::initializare(int nrLocuinte_) {
     for(int i = nrLocuinte_; i < dimensiune; i++) {
         locuinta[i]->setValues("", NULL, 0.0);
     }
 }
+*/
 
 void AgentieImobiliara::extindere() {
     dimensiune++;
     if (dimensiune > 1) {
         Locuinta **temp = new Locuinta*[dimensiune];
-        for(int i = 0; i < nrLocuinte; i++) {
+        for(int i = 0; i <= nrLocuinte; i++) {
             temp[i] = locuinta[i];
         }
         delete [] locuinta;
         locuinta = temp;
-        initializare(nrLocuinte);
+        //initializare(nrLocuinte);
     } else {
+        delete [] locuinta;
         locuinta = new Locuinta*[dimensiune];
-        initializare(nrLocuinte);
+        //initializare(nrLocuinte);
     }
 }
 
@@ -468,7 +497,7 @@ void AgentieImobiliara::micsorare() {
 }
 
 void AgentieImobiliara::stergereLocuinta(int nrLocuinta) {
-    for(int i = nrLocuinta; i < nrLocuinta - 1; i++) {
+    for(int i = nrLocuinta; i < nrLocuinte - 1; i++) {
         locuinta[i] = locuinta[i + 1];
     }
     nrLocuinte--;
@@ -480,19 +509,31 @@ void AgentieImobiliara::adaugaLocuinta(bool tip, const string &numeClient_, int 
         extindere();
     }
     if (tip == 0) {
-        Casa obiect;
-        cin >> obiect;
-        locuinta[nrLocuinte++] = &obiect;
+        locuinta[nrLocuinte] = new Casa;
+        dynamic_cast<Casa*>(locuinta[nrLocuinte++])->setValues(numeClient_, suprafataUtila_, discount_, valoare);
     } else {
-        Apartament obiect;
-        cin >> obiect;
-        locuinta[nrLocuinte++] = &obiect;
+        locuinta[nrLocuinte] = new Apartament;
+        dynamic_cast<Apartament*>(locuinta[nrLocuinte++])->setValues(numeClient_, suprafataUtila_, discount_, valoare);
     }
 }
 
 void AgentieImobiliara::afisare() {
     for (int i = 0; i < nrLocuinte; i++) {
-        cout << "Locuinta " << i + 1 << locuinta[i] << '\n';
+        cout << "Locuinta " << i + 1 << ") " << locuinta[i] << '\n';
+    }
+}
+
+void AgentieImobiliara::afisareDetaliat() {
+    for (int i = 0; i < nrLocuinte; i++) {
+        cout << "Locuinta " << i + 1 << ") \n";
+        cout << "Nume client: " << locuinta[i]->getNumeClient() << '\n';
+        cout << "Suprafata Utila: " << locuinta[i]->getSuprafataUtila() << '\n';
+        cout << "Discount (%): " << locuinta[i]->getDiscount() << '\n';
+        if (!locuinta[i]->tip()) {
+            cout << "Etaj: " << dynamic_cast<Apartament*>(locuinta[i])->getEtaj() << "\n\n";
+        } else if (locuinta[i]->tip()) {
+            cout << "Suprafata Curte: " << dynamic_cast<Casa*>(locuinta[i])->getSuprafataCurte() << "\n\n";
+        }
     }
 }
 
@@ -511,6 +552,7 @@ void AgentieImobiliara::adaugare() {
 }
 
 
+
 // ******************************************************************************* //
 // baza
 bool iesire();
@@ -521,6 +563,19 @@ int main() {
     // meniu interactiv
 
     AgentieImobiliara obiect;
+    // teste pentru debugging
+    /*
+    obiect.extindere();
+    obiect.adaugaLocuinta(1, "1", 11, 69, 1);
+    obiect.adaugaLocuinta(0, "1", 5, 53, 1);
+    obiect.adaugaLocuinta(1, "1", 12, 78, 1);
+    cout << obiect.getLocuinta(0)->getDiscount();
+    cout << '\n';
+    cout << obiect.getLocuinta(1)->getDiscount();
+    cout << '\n';
+    cout << obiect.getLocuinta(2)->getDiscount();
+    cout << '\n';
+    */
 
     do {
         cout << "1. Adauga o noua agentie imobiliara\n"
@@ -611,13 +666,13 @@ int main() {
                     cout << "Introduceti suprafata curtii: ";
                     int suprafataCurte_;
                     cin >> suprafataCurte_;
-                    obiect.getObiect(agentie)->adaugaLocuinta(numar - 1, numeClient_, suprafataUtila_, discount_, suprafataCurte_);
+                    obiect.getObiect(agentie - 1)->adaugaLocuinta(numar - 1, numeClient_, suprafataUtila_, discount_, suprafataCurte_);
                     cout << "Locuinta a fost adaugata!\n";
                 } else {
                     cout << "Introduceti etajul apartamentului: ";
                     int etaj_;
                     cin >> etaj_;
-                    obiect.getObiect(agentie)->adaugaLocuinta(numar - 1, numeClient_, suprafataUtila_, discount_, etaj_);
+                    obiect.getObiect(agentie - 1)->adaugaLocuinta(numar - 1, numeClient_, suprafataUtila_, discount_, etaj_);
                     cout << "Locuinta a fost adaugata!\n";
                 }
                 system("pause");
@@ -635,11 +690,11 @@ int main() {
                 int agentie;
                 cin >> agentie;
                 system("CLS");
-                cout << "Alege o locuinta:";
-                obiect.getObiect(agentie)->afisare();
+                cout << "Alege o locuinta:\n";
+                obiect.getObiect(agentie - 1)->afisare();
                 int locuinta;
                 cin >> locuinta;
-                obiect.getObiect(agentie)->stergereLocuinta(locuinta - 1);
+                obiect.getObiect(agentie - 1)->stergereLocuinta(locuinta - 1);
                 cout << "Locuinta a fost stearsa!";
                 system("pause");
                 //exit = iesire();
@@ -656,7 +711,7 @@ int main() {
                 int agentie;
                 cin >> agentie;
                 system("CLS");
-                obiect.getObiect(agentie)->afisare();
+                obiect.getObiect(agentie - 1)->afisareDetaliat();
                 system("pause");
                 //exit = iesire();
                 break;
@@ -672,8 +727,8 @@ int main() {
                 int agentie;
                 cin >> agentie;
                 system("CLS");
-                cout << "Alege o locuinta:";
-                obiect.getObiect(agentie)->afisare();
+                cout << "Alege o locuinta:\n";
+                obiect.getObiect(agentie - 1)->afisare();
                 int locuinta;
                 cin >> locuinta;
                 system("CLS");
@@ -689,7 +744,10 @@ int main() {
                     cout << "Valoare introdusa incorecta! Discountul nu a fost aplicat.";
                     areDiscount_ = false;
                 }
-                //obiect.getObiect(agentie)->getLocuinta();
+                int chirieSuprafata_;
+                cout << "Introduceti chiria pe suprafata.\n";
+                cin >> chirieSuprafata_;
+                cout << obiect.getObiect(agentie - 1)->getLocuinta(locuinta - 1)->CalculChirie(chirieSuprafata_, areDiscount_) << '\n';
                 system("pause");
                 //exit = iesire();
                 break;
